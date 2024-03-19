@@ -9,12 +9,11 @@ from Controller.cloudwatch_controller import get_ec2_stats, get_last_15_min_stat
 
 
 class EC2StatsWindow(QWidget):
-    def __init__(self, main_window, region, instance_id):
+    def __init__(self, main_window, instance_id):
         super().__init__()
 
         self.main_window = main_window
         self.instance_id = instance_id
-        self.region = region
         self.axis_x = None
         self.axis_y = None
 
@@ -41,9 +40,8 @@ class EC2StatsWindow(QWidget):
         self.stat_selection_label = QLabel("Select stat:")
         stat_selection_layout.addWidget(self.stat_selection_label)
         self.stat_selection_input = QComboBox()
-        #print("Stats:")
-        #print(get_ec2_stats(self.main_window.session))
-        self.stat_selection_input.addItems(get_ec2_stats(self.main_window.session))
+
+        self.stat_selection_input.addItems(get_ec2_stats(self.main_window.cloudwatch_client))
         self.stat_selection_input.currentTextChanged.connect(self.stat_changed)
         stat_selection_layout.addWidget(self.stat_selection_input)
         layout.addLayout(stat_selection_layout)
@@ -75,10 +73,9 @@ class EC2StatsWindow(QWidget):
         self.chart.removeAxis(self.axis_x)
         self.chart.removeAxis(self.axis_y)
         datapoints = get_last_15_min_stats(
-            self.main_window.session,
-            self.region,
             self.stat_selection_input.currentText(),
-            self.instance_id
+            self.instance_id,
+            self.main_window.cloudwatch_client
         )
         print("datapoints:")
         print([[str(datapoint.timestamp), str(datapoint.value)] for datapoint in datapoints])

@@ -32,14 +32,16 @@ class EC2Window(QWidget):
         self.region_selection_label = QLabel("Select region:")
         region_selection_layout.addWidget(self.region_selection_label)
         self.region_selection_input = QComboBox()
-        self.region_selection_input.addItems(get_ec2_regions(self.main_window.session))
+        self.region_selection_input.addItems(get_ec2_regions(self.main_window.ec2_client))
+        self.region_selection_input.setCurrentText(self.main_window.ec2_client.meta.region_name)
         self.region_selection_input.currentTextChanged.connect(self.update_ec2_list)
         region_selection_layout.addWidget(self.region_selection_input)
         layout.addLayout(region_selection_layout)
 
         self.ec2_list_widget = QListWidget(self)
-        self.ec2_list_widget.setStyleSheet("QListWidget:item {selection-background-color: #C8C8C8;}")
-        
+        self.ec2_list_widget.setStyleSheet(
+            "QListWidget:item {selection-background-color: #C8C8C8;}")
+
         layout.addWidget(self.ec2_list_widget)
 
         update_button = QPushButton('Update', self)
@@ -62,11 +64,16 @@ class EC2Window(QWidget):
 
 
     def update_ec2_list(self):
-        self.ec2_list_widget.clear()
-        items = get_ec2_instances(
-            self.main_window.session,
-            self.region_selection_input.currentText()
+        self.main_window.ec2_client = self.main_window.session.client(
+            'ec2',
+            region_name=self.region_selection_input.currentText()
         )
+        self.main_window.cloudwatch_client = self.main_window.session.client(
+            'cloudwatch',
+            region_name=self.region_selection_input.currentText()
+        )
+        self.ec2_list_widget.clear()
+        items = get_ec2_instances(self.main_window.ec2_client)
 
         for index, item in enumerate(items):
             list_item = QListWidgetItem()
@@ -112,7 +119,6 @@ class EC2Window(QWidget):
     def stats_ec2_button_clicked(self):
         stats_ec2_window = EC2StatsWindow(
             self.main_window,
-            self.region_selection_input.currentText(),
             self.sender().property('ec2_id')
         )
         self.main_window.stacked_widget.addWidget(stats_ec2_window)
@@ -121,7 +127,6 @@ class EC2Window(QWidget):
 
     def stop_ec2_button_clicked(self):
         stop_ec2_instance(
-            self.main_window.session,
             self.sender().property('ec2_id'),
-            self.region_selection_input.currentText()
+            self.main_window.cloudwatch_client
         )

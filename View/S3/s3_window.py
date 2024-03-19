@@ -28,7 +28,8 @@ class S3Window(QWidget):
         button_layout.addWidget(back_button)
 
         self.bucket_list_widget = QListWidget(self)
-        self.bucket_list_widget.setStyleSheet("QListWidget:item {selection-background-color: #C8C8C8;}")
+        self.bucket_list_widget.setStyleSheet(
+            "QListWidget:item {selection-background-color: #C8C8C8;}")
 
         layout.addWidget(self.bucket_list_widget)
 
@@ -53,7 +54,7 @@ class S3Window(QWidget):
 
     def update_bucket_list(self):
         self.bucket_list_widget.clear()
-        items = get_buckets(self.main_window.session)
+        items = get_buckets(self.main_window.s3_client)
         for index, item in enumerate(items):
             list_item = QListWidgetItem()
             list_item.setBackground( \
@@ -84,14 +85,17 @@ class S3Window(QWidget):
 
     def delete_bucket_button_clicked(self):
         print(self.sender().property('bucket_id'))
-        delete_bucket(self.main_window.session, self.sender().property('bucket_id'))
+        delete_bucket(self.sender().property('bucket_id'), self.main_window.s3_client)
 
 
     def modify_bucket_button_clicked(self):
         print("Bucket id:")
         print(str(self.sender().property('bucket_id')))
         print(self.sender())
-        bucket_window = BucketWindow(self.main_window, str(self.sender().property('bucket_id')))
+        bucket_window = BucketWindow(
+            self.main_window,
+            str(self.sender().property('bucket_id'))
+        )
         self.main_window.stacked_widget.addWidget(bucket_window)
         self.main_window.stacked_widget.setCurrentIndex(2)
 

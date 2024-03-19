@@ -33,7 +33,8 @@ class BucketWindow(QWidget):
         button_layout.addWidget(back_button)
 
         self.object_list_widget = QListWidget(self)
-        self.object_list_widget.setStyleSheet("QListWidget:item {selection-background-color: #C8C8C8;}")
+        self.object_list_widget.setStyleSheet(
+            "QListWidget:item {selection-background-color: #C8C8C8;}")
 
         layout.addWidget(self.object_list_widget)
 
@@ -50,7 +51,7 @@ class BucketWindow(QWidget):
 
     def update_object_list(self):
         self.object_list_widget.clear()
-        items = get_bucket_objects(self.main_window.session, self.bucket_name)
+        items = get_bucket_objects(self.main_window.s3_client, self.bucket_name)
         for index, item in enumerate(items):
             list_item = QListWidgetItem()
             list_item.setBackground( \
@@ -78,7 +79,7 @@ class BucketWindow(QWidget):
 
     def delete_object_button_clicked(self):
         delete_object(
-            self.main_window.session,
+            self.main_window.s3_client,
             self.bucket_name,
             self.sender().property('object_id')
         )

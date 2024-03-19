@@ -32,7 +32,8 @@ class NewEC2Window(QWidget):
         self.region_selection_label = QLabel("Select region:")
         region_selection_layout.addWidget(self.region_selection_label)
         self.region_selection_input = QComboBox()
-        self.region_selection_input.addItems(get_ec2_regions(self.main_window.session))
+        self.region_selection_input.addItems(get_ec2_regions(self.main_window.ec2_client))
+        self.region_selection_input.setCurrentText(self.main_window.ec2_client.meta.region_name)
         self.region_selection_input.currentTextChanged.connect(self.region_changed)
         region_selection_layout.addWidget(self.region_selection_input)
         layout.addLayout(region_selection_layout)
@@ -49,10 +50,7 @@ class NewEC2Window(QWidget):
         self.key_selection_label = QLabel("Select key pair:")
         key_selection_layout.addWidget(self.key_selection_label)
         self.key_selection_input = QComboBox()
-        self.key_selection_input.addItems(
-            get_key_pairs(self.main_window.session,
-            self.region_selection_input.currentText())
-        )
+        self.key_selection_input.addItems(get_key_pairs(self.main_window.ec2_client))
         key_selection_layout.addWidget(self.key_selection_input)
         layout.addLayout(key_selection_layout)
 
@@ -60,10 +58,7 @@ class NewEC2Window(QWidget):
         self.sg_selection_label = QLabel("Select security group:")
         sg_selection_layout.addWidget(self.sg_selection_label)
         self.sg_selection_input = QComboBox()
-        self.sg_selection_input.addItems(
-            get_security_groups(self.main_window.session,
-                self.region_selection_input.currentText())
-        )
+        self.sg_selection_input.addItems(get_security_groups(self.main_window.ec2_client))
         sg_selection_layout.addWidget(self.sg_selection_input)
         layout.addLayout(sg_selection_layout)
 
@@ -71,10 +66,7 @@ class NewEC2Window(QWidget):
         self.subnet_selection_label = QLabel("Select subnet:")
         subnet_selection_layout.addWidget(self.subnet_selection_label)
         self.subnet_selection_input = QComboBox()
-        self.subnet_selection_input.addItems(
-            get_subnets(self.main_window.session,
-                self.region_selection_input.currentText())
-        )
+        self.subnet_selection_input.addItems(get_subnets(self.main_window.ec2_client))
         subnet_selection_layout.addWidget(self.subnet_selection_input)
         layout.addLayout(subnet_selection_layout)
 
@@ -94,7 +86,7 @@ class NewEC2Window(QWidget):
     def create_button_clicked(self):
         instance_type = self.instance_selection_input.currentText()
         region = self.region_selection_input.currentText()
-        image_id = find_ubuntu_ami(self.main_window.session, region)
+        image_id = find_ubuntu_ami(self.main_window.ec2_client)
         key_name = self.key_selection_input.currentText()
         security_group_ids = [self.sg_selection_input.currentText()]
         subnet_id = self.subnet_selection_input.currentText()
@@ -103,30 +95,29 @@ class NewEC2Window(QWidget):
         print(image_id)
 
         try:
-            run_ec2_instance(self.main_window.session, image_id, instance_type,
-                             key_name, security_group_ids, subnet_id, 1, 1, region)
+            run_ec2_instance(self.main_window.ec2_client, image_id, instance_type,
+                             key_name, security_group_ids, subnet_id, 1, 1)
         except Exception as e:
             error_window = ErrorWindow(str(e))
             error_window.exec_()
-        
+
         self.go_back()
-    
+
 
     def region_changed(self):
         print("New region")
         print(self.region_selection_input.currentText())
+        self.main_window.ec2_client = self.main_window.session.client(
+            'ec2',
+            region_name=self.region_selection_input.currentText()
+        )
+        self.main_window.cloudwatch_client = self.main_window.session.client(
+            'cloudwatch',
+            region_name=self.region_selection_input.currentText()
+        )
         self.key_selection_input.clear()
-        self.key_selection_input.addItems(
-            get_key_pairs(self.main_window.session,
-            self.region_selection_input.currentText())
-        )
+        self.key_selection_input.addItems(get_key_pairs(self.main_window.ec2_client))
         self.sg_selection_input.clear()
-        self.sg_selection_input.addItems(
-            get_security_groups(self.main_window.session,
-                self.region_selection_input.currentText())
-        )
+        self.sg_selection_input.addItems(get_security_groups(self.main_window.ec2_client))
         self.subnet_selection_input.clear()
-        self.subnet_selection_input.addItems(
-            get_subnets(self.main_window.session,
-                self.region_selection_input.currentText())
-        )
+        self.subnet_selection_input.addItems(get_subnets(self.main_window.ec2_client))

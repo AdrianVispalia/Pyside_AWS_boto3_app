@@ -3,6 +3,7 @@ from PySide2.QtWidgets import QApplication
 from View.main_window import MainWindow
 from View.general.error_window import ErrorWindow
 from Controller.utils import check_aws_configuration
+from Controller.utils import get_session
 
 
 if __name__ == '__main__':
@@ -10,7 +11,8 @@ if __name__ == '__main__':
 
     try:
         check_aws_configuration()
-        main_window = MainWindow()
+        session = get_session()
+        main_window = MainWindow(session)
         main_window.show()
         sys.exit(app.exec_())
     except Exception as e:

@@ -64,7 +64,7 @@ class NewObjectWindow(QWidget):
     def upload_button_clicked(self):
         object_key = self.bucket_name_input_box.text()
         try:
-            upload_object(self.main_window.session, self.bucket_name,
+            upload_object(self.main_window.s3_client, self.bucket_name,
                           object_key, self.selected_file_path)
         except Exception as e:
             error_window = ErrorWindow(str(e))

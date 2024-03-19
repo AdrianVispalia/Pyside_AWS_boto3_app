@@ -38,6 +38,7 @@ class NewBucketWindow(QWidget):
         region_selection_layout.addWidget(self.region_selection_label)
         self.region_selection_input = QComboBox()
         self.region_selection_input.addItems(get_available_regions())
+        self.region_selection_input.setCurrentText(self.main_window.s3_client.meta.region_name)
         region_selection_layout.addWidget(self.region_selection_input)
         layout.addLayout(region_selection_layout)
 
@@ -55,12 +56,16 @@ class NewBucketWindow(QWidget):
 
 
     def create_button_clicked(self):
-        region = self.region_selection_input.currentText()
+        self.main_window.s3_client = self.main_window.session.client(
+            's3',
+            region_name=self.region_selection_input.currentText()
+        )
         name = self.bucket_name_input_box.text()
         try:
-            create_bucket(self.main_window.session, name, region)
+            create_bucket(self.main_window.s3_client, name,
+                          self.main_window.s3_client.meta.region_name)
         except Exception as e:
             error_window = ErrorWindow(str(e))
             error_window.exec_()
-        
+
         self.go_back()

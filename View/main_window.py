@@ -4,16 +4,18 @@ from PySide2.QtGui import QFont
 from PySide2.QtCore import Qt
 from View.EC2.ec2_window import EC2Window
 from View.S3.s3_window import S3Window
-from Controller.utils import get_session
+
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, session):
         super().__init__()
 
+        self.session = session
+        self.ec2_client = session.client('ec2')
+        self.cloudwatch_client = session.client('cloudwatch')
+        self.s3_client = session.client('s3')
         self.setWindowTitle('AWS Manager')
         self.setGeometry(100, 100, 700, 400)
-
-        self.session = get_session()
 
         central_widget = QWidget()
         layout = QVBoxLayout(central_widget)
